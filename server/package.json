@@ -10,7 +10,7 @@
     "start": "cross-env NODE_ENV=production node index.js",
     "dev": "cross-env NODE_ENV=development nodemon index.js",
     "build:ui": "cd ../client && npm run build && xcopy /E /I /Y \"dist\" \"../server/dist\"",
-    "deploy:full": "npm run build:ui && git add. && git commit -m \"newUiBuild\" && git push"
+    "deploy:full": "npm run build:ui && git add . && git commit -m \"newUiBuild\" && git push"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",

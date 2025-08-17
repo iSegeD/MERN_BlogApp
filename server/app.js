@@ -39,10 +39,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 
-/* app.use(express.static(path.resolve(__dirname, "dist")));
+app.use(express.static(path.resolve(__dirname, "dist")));
 app.get("/*path", (req, res) => {
   res.sendFile(path.resolve(__dirname, "dist", "index.html"));
-}); */
+});
 
 app.use(unknownEndpoint);
 app.use(errorHandler);
