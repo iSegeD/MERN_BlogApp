@@ -1,0 +1,32 @@
+{
+  "name": "inkflow-backend",
+  "version": "1.0.0",
+  "description": "Backend of a personal pet project created for practicing full-satck application development using Node.js, Express and MongoDB",
+  "license": "ISC",
+  "author": "Sergey Dolzhenko",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "cross-env NODE_ENV=production node index.js",
+    "dev": "cross-env NODE_ENV=development nodemon index.js",
+    "build:ui": "cd ../client && npm run build && xcopy /E /I /Y \"dist\" \"../server/dist\"",
+    "deploy:full": "npm run build:ui && git add. && git commit -m \"newUiBuild\" && git push"
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.16.4",
+    "multer": "^2.0.2",
+    "sharp": "^0.34.3",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "cross-env": "^10.0.0",
+    "nodemon": "^3.1.10"
+  }
+}
