@@ -1,6 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { addUser } from "./userReducer";
-import { setNotification } from "./notificationReducer";
 import {
   register,
   loginUser,
@@ -61,9 +60,9 @@ export const registration = (credentials) => {
       toast.success("Account created. You can now log in");
       return { success: true };
     } catch (error) {
-      dispatch(setNotification(`Error: ${error.response.data.message}`));
       return {
         success: false,
+        message: error.response.data.message,
       };
     }
   };
@@ -78,8 +77,13 @@ export const signIn = (credentials) => {
       toast.success("👋 Welcome back!");
       return { success: true };
     } catch (error) {
-      dispatch(setNotification(`Error: ${error.response.data.message}`));
-      return { success: false };
+      return {
+        success: false,
+        message:
+          error.response?.data?.message === "Invalid credentials"
+            ? "Email or password is incorrect"
+            : "Something went wrong, please try again",
+      };
     }
   };
 };

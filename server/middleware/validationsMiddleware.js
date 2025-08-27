@@ -81,7 +81,7 @@ export const postValidation = [
 
       for (const tag of tagArray) {
         if (tag.length < 2 || tag.length > 20) {
-          httpError("Tag must be 2–20 characters long");
+          httpError("Tag must be 2–20 characters long", 422);
         }
       }
 
@@ -116,7 +116,7 @@ export const patchPostValidation = [
 
       for (const tag of tagsArray) {
         if (tag.length < 2 || tag.length > 20) {
-          httpError("Tag  must be 2–20 characters long");
+          httpError("Tag  must be 2–20 characters long", 422);
         }
       }
 

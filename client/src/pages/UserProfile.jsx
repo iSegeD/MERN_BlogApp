@@ -1,4 +1,8 @@
+// React
 import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+
+// Redux
 import { useDispatch, useSelector } from "react-redux";
 import {
   getUserById,
@@ -7,30 +11,47 @@ import {
   patchUser,
 } from "../reducers/userReducer";
 
-import { Link, useParams } from "react-router-dom";
+// Form
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { editUserSchema } from "../validations/userSchema";
 
+// Hooks & Components
 import useAuthRedirect from "../hooks/useAuthRedirect";
-
 import NotificationMessage from "../components/NotificationMessage";
 
+// UI & Assets
 import { MdUploadFile, MdSend, MdOutlineAlternateEmail } from "react-icons/md";
-
 import noAvatar from "../assets/images/noAvatar.png";
 
 const UserProfile = () => {
   useAuthRedirect();
+
   const { id } = useParams();
   const currentUser = useSelector((state) => state.user.single);
   const dispatch = useDispatch();
 
   const [avatarFromServer, setAvatarFromServer] = useState("");
   const [newAvatar, setNewAvatar] = useState(null);
-  const [name, setName] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isDirty, dirtyFields },
+    setError,
+  } = useForm({
+    resolver: yupResolver(editUserSchema),
+    mode: "onChange",
+    defaultValues: {
+      name: "",
+      username: "",
+      email: "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
 
   useEffect(() => {
     dispatch(getUserById(id));
@@ -41,13 +62,18 @@ const UserProfile = () => {
 
   useEffect(() => {
     if (currentUser) {
-      setName(currentUser.name);
-      setUsername(currentUser.username);
-      setEmail(currentUser.email);
+      reset({
+        name: currentUser.name,
+        username: currentUser.username,
+        email: currentUser.email,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       setAvatarFromServer(currentUser.avatar);
       setNewAvatar(null);
     }
-  }, [currentUser]);
+  }, [currentUser, reset]);
 
   const handleSubmitAvatar = async () => {
     const formData = new FormData();
@@ -62,43 +88,37 @@ const UserProfile = () => {
     setNewAvatar(null);
   };
 
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-
-    const isNameChange = name !== currentUser.name;
-    const isUsernameChange = username !== currentUser.username;
-    const isEmailChange = email !== currentUser.email;
-    const isPasswordChange =
-      currentPassword !== "" || newPassword !== "" || confirmPassword !== "";
-
-    if (
-      !isNameChange &&
-      !isUsernameChange &&
-      !isEmailChange &&
-      !isPasswordChange
-    ) {
+  const handleEditSubmit = async (data) => {
+    if (!isDirty) {
       return;
     }
 
-    const userData = {};
+    const updatedFields = {};
 
-    if (isNameChange) userData.name = name;
-    if (isUsernameChange) userData.username = username;
-    if (isEmailChange) userData.email = email;
+    Object.keys(dirtyFields).forEach((key) => {
+      updatedFields[key] = data[key];
+    });
 
-    if (isPasswordChange) {
-      if (currentPassword) userData.currentPassword = currentPassword;
-      if (newPassword) userData.newPassword = newPassword;
-      if (confirmPassword) userData.confirmPassword = confirmPassword;
-    }
-
-    const result = await dispatch(patchUser(userData));
+    const result = await dispatch(patchUser(updatedFields));
 
     if (result.success) {
       dispatch(getUserById(id));
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
+    }
+
+    if (!result.success && result.message) {
+      if (result.message.includes("Username")) {
+        setError("username", { type: "server", message: result.message });
+      }
+      if (result.message.includes("Email")) {
+        setError("email", { type: "server", message: result.message });
+      }
+
+      if (result.message.includes("Invalid")) {
+        setError("currentPassword", {
+          type: "server",
+          message: result.message,
+        });
+      }
     }
   };
 
@@ -148,7 +168,7 @@ const UserProfile = () => {
               type="file"
               name="avatar"
               id="avatar"
-              accept="image/png, image/jpg, image/jpeg"
+              accept="image/jpeg, image/jpg, image/png, image/webp, image/heic, image/heif"
               className="hidden"
               onChange={({ target }) => setNewAvatar(target.files[0])}
             />
@@ -180,65 +200,99 @@ const UserProfile = () => {
         <NotificationMessage />
 
         {/* BOTTOM PART: Form */}
-        <form className="space-y-4" onSubmit={handleEditSubmit}>
+        <form className="" onSubmit={handleSubmit(handleEditSubmit)}>
           <input
+            className={`px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.name?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-slate-300"
+            }`}
             type="text"
-            name="name"
             placeholder="Your Full Name"
-            value={name}
-            onChange={({ target }) => setName(target.value)}
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            {...register("name")}
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.name?.message}
+          </p>
 
           <input
+            className={`mt-5 px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.username?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-gray-300"
+            }`}
             type="text"
-            name="username"
             placeholder="Your Username"
-            value={username}
-            onChange={({ target }) => setUsername(target.value)}
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            {...register("username")}
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.username?.message}
+          </p>
 
           <input
+            className={`mt-5 px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.email?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-gray-300"
+            }`}
             type="email"
-            name="email"
             placeholder="Your email"
-            value={email}
-            onChange={({ target }) => setEmail(target.value)}
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            {...register("email")}
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.email?.message}
+          </p>
 
           <input
+            className={`mt-5 px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.currentPassword?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-gray-300"
+            }`}
             type="password"
-            name="password"
             placeholder="Current password"
-            value={currentPassword}
-            onChange={({ target }) => setCurrentPassword(target.value)}
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            {...register("currentPassword")}
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.currentPassword?.message}
+          </p>
 
           <input
+            className={`mt-5 px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.newPassword?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-gray-300"
+            }`}
             type="password"
-            name="password"
             placeholder="New password"
-            value={newPassword}
-            onChange={({ target }) => setNewPassword(target.value)}
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
+            {...register("newPassword")}
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.newPassword?.message}
+          </p>
 
           <input
+            className={`mt-5 px-3 py-2 w-full rounded border  focus:outline-none focus:ring-2 transition ${
+              errors.confirmPassword?.message
+                ? "focus:ring-red-400 border-red-300"
+                : "focus:ring-blue-400 border-gray-300"
+            }`}
             type="password"
-            name="confirmPassword"
-            value={confirmPassword}
-            onChange={({ target }) => setConfirmPassword(target.value)}
+            {...register("confirmPassword")}
             placeholder="Confirm password"
-            className="px-3 py-2 w-full rounded border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
           />
+          <p className="mt-1 ml-1 text-sm font-semibold text-red-600">
+            {errors.confirmPassword?.message}
+          </p>
 
           <div className="flex justify-center mt-6">
             <button
               type="submit"
-              className="py-2 px-4 rounded text-white bg-[#376bc0] hover:bg-[#2f5aad] transition-colors duration-300 ease-in-out cursor-pointer"
+              className={`py-2 px-4 rounded text-white transition-colors duration-300 ease-in-out ${
+                isDirty
+                  ? "bg-[#376bc0] hover:bg-[#2f5aad] cursor-pointer"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
             >
               Save changes
             </button>

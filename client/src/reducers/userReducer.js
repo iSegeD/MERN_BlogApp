@@ -106,8 +106,18 @@ export const patchUser = (userData) => {
       toast.success("Profile information successfully updated");
       return { success: true };
     } catch (error) {
-      dispatch(setNotification(`Error: ${error.response.data.message}`));
-      return { success: false };
+      if (
+        error.response?.data?.message ===
+        "To change password, fill in all password fields"
+      ) {
+        dispatch(setNotification(`Error: ${error.response.data.message}`));
+      }
+      return {
+        success: false,
+        message:
+          error.response.data.message ||
+          "Something went wrong, please try again",
+      };
     }
   };
 };

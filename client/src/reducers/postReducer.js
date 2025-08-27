@@ -119,8 +119,7 @@ export const createPost = (formData) => {
       toast.success("Post created!");
       return { success: true };
     } catch (error) {
-      dispatch(setNotification(`Error: ${error.response.data.message}`));
-      return { success: false };
+      return { success: false, message: error.response.data.message };
     }
   };
 };
